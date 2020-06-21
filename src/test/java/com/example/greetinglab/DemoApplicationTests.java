@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 
 import io.restassured.http.ContentType;
@@ -26,7 +28,7 @@ import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("dev")
+// @ActiveProfiles("dev")
 @Slf4j
 class DemoApplicationTests {
 
@@ -101,4 +103,16 @@ class DemoApplicationTests {
 			.statusCode(200);
 	}	
 
+	@Test
+	@DisplayName("访问/fileupload 可以上传文件")
+	void uploadFile() throws IOException {
+		given().port(port)
+			.accept(MediaType.APPLICATION_JSON_VALUE)
+			.multiPart("file", new ClassPathResource("application-dev.properties").getFile())
+			.param("projectId", 1L)
+			.when()
+			.post("/fileupload")
+			.then()
+			.statusCode(200);
+	}
 }
