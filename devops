@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #设置应用名称
-APP_NAME=greeting-lab
-SERVICE_NAME=greeting-lab
+APP_NAME=greeting-lab-backend
+SERVICE_NAME=greeting-lab-backend
 JAR_NAME=pms-0.0.1-SNAPSHOT.jar
 BIN_EXT=
 BUILD_ARGS=

@@ -140,6 +140,11 @@ objects:
               secretKeyRef:
                 name: ${APP_NAME}-database-bind
                 key: uri
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                name: ${APP_NAME}-database-bind
+                key: database
           - name: DB_USERNAME
             valueFrom:
               secretKeyRef:
@@ -214,7 +219,7 @@ objects:
       app: ${APP_NAME}
   stringData:
     uri: ${APP_NAME}-database
-    database: my_data
+    database: pms
     user: dbuser
     password: secret      
 - apiVersion: apps.openshift.io/v1
@@ -324,7 +329,7 @@ parameters:
 - name: APP_NAME
   description: The application Name
   displayName: Source URL
-  value: greeting-lab
+  value: greeting-lab-backend
   required: true  
 apiVersion: template.openshift.io/v1
 kind: Template
