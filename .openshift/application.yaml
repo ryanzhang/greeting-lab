@@ -1,0 +1,330 @@
+objects:
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}
+    name: s2i-java
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - from:
+        kind: DockerImage
+        name: fabric8/s2i-java
+      generation: null
+      importPolicy: {}
+      name: latest
+      referencePolicy:
+        type: ''
+  status:
+    dockerImageRepository: ''
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    lookupPolicy:
+      local: false
+  status:
+    dockerImageRepository: ''
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APP_NAME}:latest
+    postCommit: {}
+    resources: {}
+    source:
+      git:
+        uri: ${SOURCE_REPOSITORY_URL}
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: s2i-java:latest
+        incremental: true
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: ${APP_NAME}-database-bind
+              key: uri
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ${APP_NAME}-database-bind
+              key: user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ${APP_NAME}-database-bind
+              key: password
+      type: Source
+    triggers:
+    - type: GitHub
+      github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+    - type: ConfigChange
+    - type: ImageChange
+      imageChange: {}
+  status:
+    lastVersion: 0
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    replicas: 1
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
+    strategy:
+      resources: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: ${APP_NAME}
+          deploymentconfig: ${APP_NAME}
+      spec:
+        containers:
+        - image: ${APP_NAME}:latest
+          name: ${APP_NAME}
+          ports:
+          - containerPort: 8778
+            protocol: TCP
+          - containerPort: 8080
+            protocol: TCP
+          - containerPort: 8443
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 400m
+              memory: 800Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 120
+            timeoutSeconds: 3
+          env:
+          - name: SPRING_PROFILES_ACTIVE
+            value: test
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                name: ${APP_NAME}-database-bind
+                key: uri
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: ${APP_NAME}-database-bind
+                key: user
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ${APP_NAME}-database-bind
+                key: password
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APP_NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${APP_NAME}:latest
+      type: ImageChange
+  status:
+    availableReplicas: 0
+    latestVersion: 0
+    observedGeneration: 0
+    replicas: 0
+    unavailableReplicas: 0
+    updatedReplicas: 0
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    - name: 8443-tcp
+      port: 8443
+      protocol: TCP
+      targetPort: 8443
+    - name: 8778-tcp
+      port: 8778
+      protocol: TCP
+      targetPort: 8778
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${APP_NAME}
+    labels:
+      app: ${APP_NAME}
+  spec:
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: ${APP_NAME}
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: ${APP_NAME}-database-bind
+    labels:
+      app: ${APP_NAME}
+  stringData:
+    uri: ${APP_NAME}-database
+    database: my_data
+    user: dbuser
+    password: secret      
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}-database
+  spec:
+    replicas: 1
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}-database
+    strategy:
+      resources: {}
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: ${APP_NAME}
+          deploymentconfig: ${APP_NAME}-database
+      spec:
+        containers:
+        - image: 172.30.1.1:5000/openshift/mysql:latest
+          name: ${APP_NAME}-database
+          ports:
+          - containerPort: 3306
+            protocol: TCP
+          resources:
+            limits:
+              cpu: '1'
+              memory: 512Mi
+          readinessProbe:
+            initialDelaySeconds: 5
+            exec:
+              command:
+              - /bin/sh
+              - -i
+              - -c
+              - MYSQL_PWD="$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u $MYSQL_USER -D $MYSQL_DATABASE
+                -e "SELECT 1"
+          livenessProbe:
+            initialDelaySeconds: 30
+            tcpSocket:
+              port: 3306
+          env:
+          - name: MYSQL_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: ${APP_NAME}-database-bind
+                key: database
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: ${APP_NAME}-database-bind
+                key: user
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ${APP_NAME}-database-bind
+                key: password
+          - name: MYSQL_ROOT_PASSWORD
+            value: verysecretrootpassword
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APP_NAME}-database
+        from:
+          kind: ImageStreamTag
+          name: mysql:latest
+          namespace: openshift
+      type: ImageChange    
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}-database
+  spec:
+    ports:
+    - name: 3306-tcp
+      port: 3306
+      protocol: TCP
+      targetPort: 3306
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}-database
+  status:
+    loadBalancer: {}        
+parameters:
+- name: SOURCE_REPOSITORY_URL
+  description: The source URL for the application
+  displayName: Source URL
+  value: https://github.com/dummy_org/dummy_repo
+  required: true
+- name: GITHUB_WEBHOOK_SECRET
+  description: The secret used to configure a GitHub webhook
+  displayName: GitHub Webhook Secret
+  required: true
+  from: '[a-zA-Z0-9]{40}'
+  generate: expression
+- name: APP_NAME
+  description: The application Name
+  displayName: Source URL
+  value: greeting-lab
+  required: true  
+apiVersion: template.openshift.io/v1
+kind: Template
