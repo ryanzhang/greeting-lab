@@ -52,7 +52,11 @@ ALTER USER 'mysql'@'%' IDENTIFIED WITH mysql_native_password BY 'mysql';
 ```
 ### 程序启动命令
 ```bash
- SPRING_PROFILES_ACTIVE=dev mvn clean spring-boot:run
+ mvn clean spring-boot:run 
+```
+或者 连接mysql数据库
+```bash
+mvn -Ptest clean spring-boot-run
 ```
 ## 编译测试
 1. 容器启动postgresql
