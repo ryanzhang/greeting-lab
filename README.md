@@ -72,5 +72,12 @@ curl -X POST  -H 'Content-Type: application/json' -d "{\"title\": \"Mr.\",\"last
 
 # 部署到Openshift
 ## 部署
-
+1. ./devops deploy (只第一次运行需要，用来部署应用资源到Openshift)
+2. ./devops push (把本地的binary push到Openshift 并且完成部署)
 ## 运行
+浏览器访问
+```bash
+oc get route greeting-lab-backend
+```
+
+
