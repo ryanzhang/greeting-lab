@@ -1,7 +1,6 @@
-package com.example.greetinglab.repository;
+package com.csg.cms.repository;
 
-import com.example.greetinglab.domain.People;
-
+import com.csg.cms.domain.People;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

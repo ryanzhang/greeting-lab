@@ -1,12 +1,12 @@
-package com.example.greetinglab.controller;
+package com.csg.cms.controller;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import com.example.greetinglab.domain.People;
-import com.example.greetinglab.repository.PeopleRepository;
 
+import com.csg.cms.domain.People;
+import com.csg.cms.repository.PeopleRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -1,4 +1,4 @@
-package com.example.greetinglab.domain;
+package com.csg.cms.domain;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

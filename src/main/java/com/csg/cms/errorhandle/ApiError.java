@@ -1,4 +1,4 @@
-package com.example.greetinglab.errorhandle;
+package com.csg.cms.errorhandle;
 
 import java.time.LocalDateTime;
 

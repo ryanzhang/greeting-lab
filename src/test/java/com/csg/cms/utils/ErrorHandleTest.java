@@ -1,4 +1,4 @@
-package com.example.greetinglab;
+package com.csg.cms.utils;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,8 +28,12 @@ import org.hamcrest.TypeSafeMatcher;
 
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-// @ActiveProfiles("dev")
-public class ErrorHandleIT {
+@ActiveProfiles("dev")
+public class ErrorHandleTest {
+
+	@LocalServerPort
+	int port;
+	
 	@Test
 	@DisplayName("输入错误调用，返回结构化错误")
 	void returnStructureErrorCode1WhenRequestInWrongWay(){

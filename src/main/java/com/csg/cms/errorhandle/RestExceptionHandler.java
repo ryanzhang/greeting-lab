@@ -1,4 +1,4 @@
-package com.example.greetinglab.errorhandle;
+package com.csg.cms.errorhandle;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;

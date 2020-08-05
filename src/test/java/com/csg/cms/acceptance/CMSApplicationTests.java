@@ -1,13 +1,12 @@
-package com.example.greetinglab;
+package com.csg.cms.acceptance;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.internal.matchers.GreaterOrEqual;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 
 import io.restassured.http.ContentType;
@@ -28,9 +27,9 @@ import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-// @ActiveProfiles("dev")
+@ActiveProfiles("dev")
 @Slf4j
-class DemoApplicationTests {
+class CMSApplicationTests {
 
 	@LocalServerPort
 	int port;
@@ -42,8 +41,14 @@ class DemoApplicationTests {
 	@Test
 	@DisplayName("访问/api/greeting 可以返回200")
 	void greetingIsUp() {
-		given().port(port).when().get("/api/greeting").then().statusCode(200);
-		// .body("$", containsString("Zhang"));
+		given()
+			.port(port)
+		.when()
+			.get("/api/greeting")
+		.then()
+			.statusCode(200)
+			//使用"$", 返回对象
+			.body("name", containsString("Zhang"));
 	}
 
 	@Test
@@ -55,7 +60,7 @@ class DemoApplicationTests {
 		.then()
 			.statusCode(200)
 			.body("name", equalTo("Ryan"))
-			//judge if id is a number
+			// .body("id", equalTo(1));
 			.body("id", greaterThanOrEqualTo(1));
 	}
 
@@ -77,8 +82,6 @@ class DemoApplicationTests {
 				.body("title", hasItem("Mr."));
 	}
 
-
-
 	@Value("${logging.file}")
 	String log_file_path;
 	@Test
@@ -90,7 +93,6 @@ class DemoApplicationTests {
 			new String(Files.readAllBytes(Paths.get(log_file_path)), 
 				Charset.defaultCharset()).contains(mark), "检测日志文件包含指定字符串失败!"
 		);
-		
 	}
 
 	@Test
@@ -103,16 +105,4 @@ class DemoApplicationTests {
 			.statusCode(200);
 	}	
 
-	@Test
-	@DisplayName("访问/fileupload 可以上传文件")
-	void uploadFile() throws IOException {
-		given().port(port)
-			.accept(MediaType.APPLICATION_JSON_VALUE)
-			.multiPart("file", new ClassPathResource("application-dev.properties").getFile())
-			.param("projectId", 1L)
-			.when()
-			.post("/fileupload")
-			.then()
-			.statusCode(200);
-	}
 }
